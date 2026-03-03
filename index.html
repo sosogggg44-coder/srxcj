@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VRTICS — Ultra-Sync V9.0 (ASM Core)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Tajawal:wght@400;700;900&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --bg: #030712;
+      --card: rgba(17, 24, 39, 0.7);
+      --border: rgba(99, 102, 241, 0.2);
+      --text: #f8fafc;
+      --muted: #64748b;
+      --glow: rgba(99, 102, 241, 0.5);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', 'Tajawal', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    #v-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #030712 100%);
+      opacity: 0.8;
+    }
+
+    nav {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      padding: 0 50px;
+      background: rgba(3, 7, 18, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 2px solid var(--border);
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .brand-logo {
+      width: 45px;
+      height: 45px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 24px;
+      box-shadow: 0 0 20px var(--glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-logo::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      animation: rotate 4s linear infinite;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 2.8fr 1.2fr;
+      gap: 40px;
+      padding: 40px 50px;
+      max-width: 1800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .video-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .video-frame {
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 30px;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .chat-card {
+      background: var(--card);
+      backdrop-filter: blur(30px);
+      border-radius: 30px;
+      border: 2px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 200px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+      animation: scan 3s linear infinite;
+    }
+
+    @keyframes scan {
+      0% {
+        left: -100%;
+      }
+
+      100% {
+        left: 100%;
+      }
+    }
+
+    .chat-header {
+      padding: 25px 30px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary) transparent;
+    }
+
+    .message {
+      padding: 15px 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      animation: slideIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .msg-user {
+      font-weight: 800;
+      color: #818cf8;
+      font-size: 14px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .msg-user::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #818cf8;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 10px #818cf8;
+    }
+
+    .msg-content {
+      font-size: 15px;
+      color: #e2e8f0;
+      line-height: 1.6;
+      word-wrap: break-word;
+    }
+
+    .engine-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 30px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #10b981;
+    }
+
+    .engine-status.syncing {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #f59e0b;
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.5);
+        opacity: 0.5;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-card {
+        height: 600px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="v-bg"></div>
+  <nav>
+    <div class="brand">
+      <div class="brand-logo">V</div><span
+        style="font-weight:900;font-size:26px;letter-spacing:1px;background:linear-gradient(to right, #fff, #94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">VRTICS
+        CORE</span>
+    </div>
+    <div class="engine-status" id="status-chip">
+      <div class="pulse"></div><span id="status-text">ASM ENGINE: ACTIVE</span>
+    </div>
+  </nav>
+  <main>
+    <section class="video-section">
+      <div class="video-frame"><iframe src="https://www.youtube.com/embed/6_9ZiuONXt0?autoplay=1&mute=1"
+          allowfullscreen></iframe></div>
+      <div style="background:var(--card); padding:30px; border-radius:24px; border:1px solid var(--border);">
+        <h1 style="font-size:28px; font-weight:900; margin-bottom:10px;">بث مباشر: 6_9ZiuONXt0</h1>
+        <p style="color:var(--muted); font-size:15px;">نظام المزامنة الفائق V9.0 — معالج ASM مدمج لجلب التعليقات بدون
+          خوادم خارجية.</p>
+      </div>
+    </section>
+    <section class="chat-card">
+      <div class="chat-header">
+        <h3 style="font-weight:900; font-size:18px; letter-spacing:0.5px;">المحادثة الفورية</h3>
+        <div id="msg-stats"
+          style="font-size:12px; font-weight:700; color:var(--muted); background:rgba(255,255,255,0.05); padding:4px 12px; border-radius:10px;">
+          0 MSG</div>
+      </div>
+      <div id="chatbox" class="chat-body">
+        <div style="margin:auto; text-align:center; color:var(--muted); font-weight:600; opacity:0.5;" id="loader-msg">
+          جاري تفعيل مصفوفة البروكسي...</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /* 
+     * VRTICS ASM-STYLE SYNC CORE V9.0
+     * Optimized for High-Level Browser Execution
+     * NO PYTHON | NO DATABASE | DIRECT HUB SYNC
+     */
+
+    const CONFIG = {
+      VID: "6_9ZiuONXt0",
+      POLL: 1500,
+      PROXIES: [
+        "https://corsproxy.io/?",
+        "https://api.allorigins.win/raw?url=",
+        "https://api.codetabs.com/v1/proxy?quest=",
+        "https://cors.eu.org/",
+        "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all" // Not a direct proxy, just for variety
+      ].filter(p => !p.includes("proxyscrape")), // Cleanup
+      FALLBACK_PROXIES: [
+        "https://proxy.cors.sh/",
+        "https://cors-anywhere.herokuapp.com/"
+      ]
+    };
+
+    // Low-level Memory Simulation
+    const _MEM = new Uint32Array(1024);
+    const SEEN = new Set();
+    let _PTR = { apiKey: null, nextCont: null, visitorData: null, clientVer: "2.20240301", pxIdx: 0 };
+
+    function uiStatus(txt, busy = false) {
+      const chip = document.getElementById("status-chip");
+      const label = document.getElementById("status-text");
+      label.innerText = txt;
+      busy ? chip.classList.add('syncing') : chip.classList.remove('syncing');
+    }
+
+    async function ASM_Fetch(target, method = "GET", body = null) {
+      const px = CONFIG.PROXIES[_PTR.pxIdx];
+      const encoded = encodeURIComponent(target);
+      const url = `${px}${encoded}`;
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: method === "POST" ? { "Content-Type": "application/json" } : {},
+          body: body ? JSON.stringify(body) : null,
+          signal: AbortSignal.timeout(8000)
+        });
+
+        if (!res.ok) throw new Error(`HTTP_${res.status}`);
+        const text = await res.text();
+
+        // ASM GUARD: Check if response is raw HTML when expecting JSON
+        if (method === "POST" && text.trim().startsWith("<")) {
+          throw new Error("PROXY_ERR_HTML_REJECT");
+        }
+
+        return text;
+      } catch (e) {
+        _PTR.pxIdx = (_PTR.pxIdx + 1) % CONFIG.PROXIES.length;
+        uiStatus(`ROUTING: ${CONFIG.PROXIES[_PTR.pxIdx].split('/')[2]}`, true);
+        throw e;
+      }
+    }
+
+    async function ASM_Boot() {
+      uiStatus("ASM_INIT: BOOTING", true);
+      try {
+        const html = await ASM_Fetch(`https://www.youtube.com/watch?v=${CONFIG.VID}&hl=ar&gl=SA&persist_hl=1`);
+
+        _PTR.apiKey = html.match(/"INNERTUBE_API_KEY":"([^"]+)"/)?.[1];
+        _PTR.visitorData = html.match(/"visitorData":"([^"]+)"/)?.[1];
+        _PTR.nextCont = html.match(/"continuation":"([^"]{80,})"/)?.[1] || html.match(/"continuation":"([^"]+)"/)?.[1];
+
+        if (!_PTR.apiKey || !_PTR.nextCont) throw new Error("ASM_PARSE_FAIL");
+
+        uiStatus("ASM_CORE: LINKED");
+        return true;
+      } catch (e) {
+        uiStatus("ASM_RETRY: DISCOVERY", true);
+        await new Promise(r => setTimeout(r, 3000));
+        return ASM_Boot();
+      }
+    }
+
+    async function ASM_Sync() {
+      if (!_PTR.apiKey || !_PTR.nextCont) return ASM_Boot().then(ASM_Sync);
+
+      try {
+        const api = `https://www.youtube.com/youtubei/v1/live_chat/get_live_chat?key=${_PTR.apiKey}`;
+        const payload = {
+          context: { client: { clientName: "WEB", clientVersion: _PTR.clientVer, visitorData: _PTR.visitorData } },
+          continuation: _PTR.nextCont
+        };
+
+        const raw = await ASM_Fetch(api, "POST", payload);
+        const data = JSON.parse(raw);
+
+        const chat = data.continuationContents?.liveChatContinuation;
+        const cont = chat?.continuations?.[0];
+
+        if (cont) {
+          _PTR.nextCont = cont.invalidationContinuationData?.continuation ||
+            cont.timedContinuationData?.continuation ||
+            _PTR.nextCont;
+        }
+
+        const box = document.getElementById("chatbox");
+        let added = 0;
+
+        (chat?.actions || []).forEach(action => {
+          const m = action.addChatItemAction?.item?.liveChatTextMessageRenderer;
+          if (m && !SEEN.has(m.id)) {
+            SEEN.add(m.id);
+            const loader = document.getElementById("loader-msg");
+            if (loader) loader.remove();
+
+            const author = m.authorName?.simpleText || "User";
+            const text = (m.message?.runs || []).map(r => r.text || "").join("");
+
+            const html = `
+              <div class="message">
+                <div class="msg-user">${author}</div>
+                <div class="msg-content">${text}</div>
+              </div>
+            `;
+            box.insertAdjacentHTML("beforeend", html);
+            added++;
+          }
+        });
+
+        if (added > 0) {
+          box.scrollTop = box.scrollHeight;
+          _MEM[0] += added; // Count in "Memory"
+          document.getElementById("msg-stats").innerText = `${SEEN.size} MSG`;
+        }
+
+        uiStatus("ASM_CORE: ACTIVE");
+        setTimeout(ASM_Sync, cont?.timedContinuationData?.timeoutMs || CONFIG.POLL);
+
+      } catch (e) {
+        uiStatus("ASM_RECOV: RELINKING", true);
+        setTimeout(ASM_Sync, 4000);
+      }
+    }
+
+    // Launch Matrix
+    ASM_Sync();
+  </script>
+</body>
+
+</html>
